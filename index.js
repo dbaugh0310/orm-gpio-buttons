@@ -213,9 +213,13 @@ GPIOButtons.prototype.createTriggers = function() {
 
 		if(enabled === true){
 			self.logger.info('GPIO-Buttons: '+ action + ' on pin ' + pin);
-			var j = new Gpio(pin,'in','both');
-			j.watch(self.listener.bind(self,action));
-			self.triggers.push(j);
+			var btn = new Gpio(pin,'in','both');
+			btn.watch(self.listener.bind(self,action));
+			self.triggers.push(btn);
+
+			self.logger.info('GPIO-Buttons: Registering LED for ' + action + ' on pin ' + ledPin);
+			var led = new Gpio(ledPin, 'out');
+			self.triggers.push(led);
 		}
 	});
 		
