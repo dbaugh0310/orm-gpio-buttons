@@ -33,7 +33,6 @@ GPIOButtons.prototype.onVolumioStart = function () {
 
 GPIOButtons.prototype.getConfigurationFiles = function()
 {
-	self.logger.info("GPIO-Buttons Get config files");
 	return ['config.json'];
 };
 
