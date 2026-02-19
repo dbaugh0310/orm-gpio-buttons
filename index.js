@@ -45,20 +45,7 @@ GPIOButtons.prototype.onStart = function () {
 	// Create a container for our LED objects if it doesn't exist
 	self.logger.info("GPIO-Buttons creating leds container");
     self.leds = {};
-
-	// ... (existing action loop)
-	self.logger.info("GPIO-Buttons Starting our actions loop");
-    actions.forEach(function(action) {
-        var ledPin = self.config.get(action + '.led');
-        var isEnabled = self.config.get(action + '.enabled');
-		self.logger.info("GPIO-Buttons We're using LED Pin " + ledPin);
-
-        if (isEnabled && ledPin !== undefined) {
-            // Initialize pin as output, starting LOW (off)
-			self.logger.info("GPIO-Buttons Creating LED Pin " + ledPin);
-            self.leds[action] = new Gpio(ledPin, 'out');
-        }
-    });
+	self.triggers = [];
 
 	self.logger.info("GPIO-Buttons Time for triggers!");
 	self.createTriggers()
@@ -237,6 +224,8 @@ GPIOButtons.prototype.createTriggers = function() {
 				var ledKernelPin = ledPin + gpioOffset;
 				self.logger.info('GPIO-Buttons: Registering LED for ' + action + ' on pin ' + ledKernelPin);
 				var led = new Gpio(ledKernelPin, 'out');
+				
+				self.leds[action] = led;
 				self.triggers.push(led);
 			}
 		}
