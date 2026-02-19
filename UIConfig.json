@@ -9,7 +9,7 @@
       "label": "Setup your GPIO button actions",
       "icon": "fa-plug",
       "onSave": {"type":"controller", "endpoint":"system_hardware/gpio-buttons", "method":"saveConfig"},
-      "savebutton": {
+      "saveButton": {
         "label": "Save",
         "data": [
           "button1Enabled",

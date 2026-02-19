@@ -189,7 +189,7 @@ GPIOButtons.prototype.saveConfig = function(data)
 		self.config.set(c1, data[s1]);
 		self.config.set(c2, data[s2]['value']);
 		self.config.set(c3, 0);
-		self.config.set(c2, data[s3]['value']);
+		self.config.set(c4, data[s3]['value']);
 	});
 
 	self.clearTriggers()
