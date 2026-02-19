@@ -5,7 +5,7 @@ var fs = require('fs-extra');
 var Gpio = require('onoff').Gpio;
 var io = require('socket.io-client');
 var socket = io.connect('http://localhost:3000');
-var actions = ["button1", "button2", "button3", "button4", "button5", "shutdown"];
+var actions = ["playPause", "volumeUp", "volumeDown", "previous", "next", "shutdown"];
 
 module.exports = GPIOButtons;
 
@@ -41,20 +41,6 @@ GPIOButtons.prototype.onStart = function () {
 	var self = this;
 	var defer=libQ.defer();
 
-	// Create a container for our LED objects if it doesn't exist
-    self.leds = {};
-
-	// ... (existing action loop)
-    actions.forEach(function(action) {
-        var ledPin = self.config.get(action + '.led');
-        var isEnabled = self.config.get(action + '.enabled');
-
-        if (isEnabled && ledPin !== undefined) {
-            // Initialize pin as output, starting LOW (off)
-            self.leds[action] = new Gpio(ledPin, 'out');
-        }
-    });
-
 	self.createTriggers()
 		.then (function (result) {
 			self.logger.info("GPIO-Buttons started");
@@ -74,12 +60,6 @@ GPIOButtons.prototype.onStop = function () {
 			self.logger.info("GPIO-Buttons stopped");
 			defer.resolve();
 		});
-
-	// Unexport all LEDs
-    Object.keys(self.leds).forEach(function(key) {
-        self.leds[key].writeSync(0); // Turn off before releasing
-        self.leds[key].unexport();
-    });
 	
     return defer.promise;
 };
@@ -141,22 +121,14 @@ GPIOButtons.prototype.getUIConfig = function () {
  				// Strings for config
 				var c1 = action.concat('.enabled');
 				var c2 = action.concat('.pin');
-				var c3 = action.concat('.led');
 				
-			// 2. Map to uiconf. 
-				// We multiply 'i' by 3 because there are now 3 elements per button group.
-				
-				// Element 0: Enabled Toggle
-				uiconf.sections[0].content[3*i].value = self.config.get(c1);
-				
-				// Element 1: Pin Number
-				uiconf.sections[0].content[3*i+1].value.value = self.config.get(c2);
-				uiconf.sections[0].content[3*i+1].value.label = self.config.get(c2).toString();
+				// accessor supposes actions and uiconfig items are in SAME order
+				// this is potentially dangerous: rewrite with a JSON search of "id" value ?				
+				uiconf.sections[0].content[2*i].value = self.config.get(c1);
+				uiconf.sections[0].content[2*i+1].value.value = self.config.get(c2);
+				uiconf.sections[0].content[2*i+1].value.label = self.config.get(c2).toString();
 
-				// Element 2: LED Number (The new part)
-				uiconf.sections[0].content[3*i+2].value.value = self.config.get(c3);
-				uiconf.sections[0].content[3*i+2].value.label = self.config.get(c3).toString();
-			
+				i = i + 1;
 			});
 
             defer.resolve(uiconf);
@@ -178,18 +150,15 @@ GPIOButtons.prototype.saveConfig = function(data)
  		// Strings for data fields
 		var s1 = action.concat('Enabled');
 		var s2 = action.concat('Pin');
-		var s3 = action.concat('LED');
 
 		// Strings for config
 		var c1 = action.concat('.enabled');
 		var c2 = action.concat('.pin');
 		var c3 = action.concat('.value');
-		var c4 = action.concat('.led');
 
 		self.config.set(c1, data[s1]);
 		self.config.set(c2, data[s2]['value']);
 		self.config.set(c3, 0);
-		self.config.set(c2, data[s3]['value']);
 	});
 
 	self.clearTriggers()
@@ -247,17 +216,6 @@ GPIOButtons.prototype.listener = function(action,err,value){
 
 	// IF change AND high (or low?)
 	if(value !== lastvalue && value === 1){
-
-		// 1. Turn OFF all LEDs first
-        Object.keys(self.leds).forEach(function(key) {
-            self.leds[key].writeSync(0);
-        });
-
-		// 2. Turn ON the LED for the button just pressed
-        if (self.leds[action]) {
-            self.leds[action].writeSync(1);
-        }
-
 		//do thing
 		self[action]();
 	}
@@ -265,31 +223,50 @@ GPIOButtons.prototype.listener = function(action,err,value){
 	self.config.set(c3,value);
 };
 
-GPIOButtons.prototype.button1 = function() {
-  this.logger.info('GPIO-Buttons: button1 pressed');
-  socket.emit('playPlaylist',{'name':'key1'})
+
+
+
+
+//Play / Pause
+GPIOButtons.prototype.playPause = function() {
+  //this.logger.info('GPIO-Buttons: Play/pause button pressed');
+  socket.emit('getState','');
+  socket.once('pushState', function (state) {
+    if(state.status=='play' && state.service=='webradio'){
+      socket.emit('stop');
+    } else if(state.status=='play'){
+      socket.emit('pause');
+    } else {
+      socket.emit('play');
+    }
+  });
 };
 
-GPIOButtons.prototype.button2 = function() {
-  this.logger.info('GPIO-Buttons: button2 pressed');
-  socket.emit('playPlaylist',{'name':'key2'})
+//next on playlist
+GPIOButtons.prototype.next = function() {
+  //this.logger.info('GPIO-Buttons: next-button pressed');
+  socket.emit('next')
 };
 
-GPIOButtons.prototype.button3 = function() {
-  this.logger.info('GPIO-Buttons: button3 pressed');
-  socket.emit('playPlaylist',{'name':'key3'})
+//previous on playlist
+GPIOButtons.prototype.previous = function() {
+  //this.logger.info('GPIO-Buttons: previous-button pressed');
+  socket.emit('prev')
 };
 
-GPIOButtons.prototype.button4 = function() {
-  this.logger.info('GPIO-Buttons: button4 pressed');
-  socket.emit('playPlaylist',{'name':'key4'})
+//Volume up
+GPIOButtons.prototype.volumeUp = function() {
+  //this.logger.info('GPIO-Buttons: Vol+ button pressed');
+  socket.emit('volume','+');
 };
 
-GPIOButtons.prototype.button5 = function() {
-  this.logger.info('GPIO-Buttons: button5 pressed');
-  socket.emit('playPlaylist',{'name':'key5'})
+//Volume down
+GPIOButtons.prototype.volumeDown = function() {
+  //this.logger.info('GPIO-Buttons: Vol- button pressed\n');
+  socket.emit('volume','-');
 };
 
+//shutdown
 GPIOButtons.prototype.shutdown = function() {
   // this.logger.info('GPIO-Buttons: shutdown button pressed\n');
   this.commandRouter.shutdown();

@@ -35,7 +35,7 @@
         {
           "id": "button1Enabled",
           "element": "switch",
-          "label": "Enable Play/pause",
+          "label": "Enable Button 1",
           "value": false
         },
         {
@@ -277,7 +277,7 @@
         {
           "id": "button2Enabled",
           "element": "switch",
-          "label": "Enable Vol+",
+          "label": "Enable Button 2",
           "value": false
         },
         {
@@ -519,7 +519,7 @@
         {
           "id": "button3Enabled",
           "element": "switch",
-          "label": "Enable Vol-",
+          "label": "Enable Button 3",
           "value": false
         },
         {
@@ -761,7 +761,7 @@
         {
           "id": "button4Enabled",
           "element": "switch",
-          "label": "Enable button4",
+          "label": "Enable Button 4",
           "value": false
         },
         {
@@ -1003,7 +1003,7 @@
         {
           "id": "button5Enabled",
           "element": "switch",
-          "label": "Enable button5",
+          "label": "Enable Button 5",
           "value": false
         },
         {
