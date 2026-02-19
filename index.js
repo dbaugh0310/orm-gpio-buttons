@@ -33,6 +33,7 @@ GPIOButtons.prototype.onVolumioStart = function () {
 
 GPIOButtons.prototype.getConfigurationFiles = function()
 {
+	self.logger.info("GPIO-Buttons Get config files");
 	return ['config.json'];
 };
 
@@ -42,19 +43,24 @@ GPIOButtons.prototype.onStart = function () {
 	var defer=libQ.defer();
 
 	// Create a container for our LED objects if it doesn't exist
+	self.logger.info("GPIO-Buttons creating leds container");
     self.leds = {};
 
 	// ... (existing action loop)
+	self.logger.info("GPIO-Buttons Starting our actions loop");
     actions.forEach(function(action) {
         var ledPin = self.config.get(action + '.led');
         var isEnabled = self.config.get(action + '.enabled');
+		self.logger.info("GPIO-Buttons We're using LED Pin " + ledPin);
 
         if (isEnabled && ledPin !== undefined) {
             // Initialize pin as output, starting LOW (off)
+			self.logger.info("GPIO-Buttons Creating LED Pin " + ledPin);
             self.leds[action] = new Gpio(ledPin, 'out');
         }
     });
 
+	self.logger.info("GPIO-Buttons Time for triggers!");
 	self.createTriggers()
 		.then (function (result) {
 			self.logger.info("GPIO-Buttons started");
