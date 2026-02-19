@@ -204,22 +204,35 @@ GPIOButtons.prototype.createTriggers = function() {
 
 	self.logger.info('GPIO-Buttons: Reading config and creating triggers...');
 
-	actions.forEach(function(action, index, array) {
-		var c1 = action.concat('.enabled');
-		var c2 = action.concat('.pin');
+	// Detect the offset (default to 0 if detection fails)
+    var gpioOffset = 0;
+    try {
+        var fs = require('fs');
+        var base = fs.readFileSync('/sys/class/gpio/gpiochip512/base', 'utf8').trim();
+        gpioOffset = parseInt(base);
+    } catch (e) {
+        // Fallback to 0 for older Pi models
+        gpioOffset = 0;
+    }
 
-		var enabled = self.config.get(c1);
-		var pin = self.config.get(c2);
+	actions.forEach(function(action, index, array) {
+		var enabled = self.config.get(action + '.enabled');
+        var pin = self.config.get(action + '.pin');
+		var ledPin = self.config.get(action + '.led');
 
 		if(enabled === true){
-			self.logger.info('GPIO-Buttons: '+ action + ' on pin ' + pin);
-			var btn = new Gpio(pin,'in','both');
+			var buttonKernelPin = pin + gpioOffset;
+			self.logger.info('GPIO-Buttons: '+ action + ' on pin ' + buttonKernelPin);
+			var btn = new Gpio(buttonKernelPin,'in','both');
 			btn.watch(self.listener.bind(self,action));
 			self.triggers.push(btn);
 
-			self.logger.info('GPIO-Buttons: Registering LED for ' + action + ' on pin ' + ledPin);
-			var led = new Gpio(ledPin, 'out');
-			self.triggers.push(led);
+			if (ledPin) {
+				var ledKernelPin = ledPin + gpioOffset;
+				self.logger.info('GPIO-Buttons: Registering LED for ' + action + ' on pin ' + ledKernelPin);
+				var led = new Gpio(ledKernelPin, 'out');
+				self.triggers.push(led);
+			}
 		}
 	});
 		
